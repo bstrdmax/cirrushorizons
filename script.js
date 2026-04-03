@@ -1,3 +1,4 @@
+// --- 1. SETUP ---
 const SUPABASE_URL = 'https://tdgudmnrqhlkwefthdat.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkZ3VkbW5ycWhsa3dlZnRoZGF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyMTI5MjksImV4cCI6MjA5MDc4ODkyOX0.Rlr-BS4x_WyMTiRBTFGQdddV8b0dtKfNzKBz1YOsJLo'; 
 
@@ -15,11 +16,11 @@ const baselineData = {
     50: { strategy: "Preservation Mode", score: 85 }
 };
 
-// --- AUTH LOGIC ---
+// --- 2. AUTH ---
 supabaseClient.auth.onAuthStateChange(async (event, session) => {
     if (session) {
         appState.user = session.user;
-        render(); // Show dashboard shell immediately
+        render(); // Show dashboard immediately
         await fetchUserFinancials(session.user.id);
     } else {
         appState.user = null;
@@ -30,7 +31,7 @@ supabaseClient.auth.onAuthStateChange(async (event, session) => {
 async function fetchUserFinancials(userId) {
     const { data, error } = await supabaseClient.from('profiles').select('*').eq('id', userId).single();
     if (error && error.code === 'PGRST116') {
-        // Create profile if missing
+        // Create profile row if missing
         await supabaseClient.from('profiles').insert({ id: userId, bills: [], transactions: [], horizon_goal: 1000000 });
     } else if (data) {
         appState.financialData = { ...appState.financialData, ...data, bills: data.bills || [], transactions: data.transactions || [] };
@@ -45,7 +46,7 @@ async function syncToCloud(updates) {
     await supabaseClient.from('profiles').upsert({ id: appState.user.id, ...updates });
 }
 
-// --- CRUD ---
+// --- 3. CRUD ---
 function addTransaction() {
     const type = document.getElementById('trans-type').value;
     const label = document.getElementById('trans-label').value;
@@ -69,50 +70,61 @@ window.deleteItem = (key, id) => {
     syncToCloud({ [key]: appState.financialData[key] });
 };
 
-// --- RENDER ---
+// --- 4. RENDER ---
 function render() {
     const fd = appState.financialData;
     document.getElementById('auth-overlay').style.display = appState.user ? 'none' : 'flex';
     document.getElementById('app-container').style.display = appState.user ? 'flex' : 'none';
     if (!appState.user) return;
 
-    const wrapper = document.getElementById('cirrus-horizons-wrapper');
-    wrapper.className = appState.theme === 'dark' ? 'dark-theme' : '';
-    
+    // Navigation Active State
     document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.tab === appState.activeTab));
     document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === appState.activeTab));
 
+    // Dashboard Math
     const dec = baselineData[fd.starting_decade || 30];
     document.getElementById('baseline-strategy').textContent = dec.strategy;
-    document.getElementById('efficiency-score').textContent = `${dec.score}%`;
-    document.getElementById('efficiency-ring').style.strokeDashoffset = 125 - (125 * dec.score) / 100;
     
+    // SVG Efficiency Ring Math (Fixed for r=36)
+    const ring = document.getElementById('efficiency-ring');
+    const scoreText = document.getElementById('efficiency-score');
+    const offset = 226 - (226 * dec.score) / 100;
+    ring.style.strokeDashoffset = offset;
+    scoreText.textContent = `${dec.score}%`;
+    
+    // Progress Bar Math
     const progress = fd.horizon_goal > 0 ? (fd.current_liquid_assets / fd.horizon_goal) * 100 : 0;
     document.getElementById('goal-bar').style.width = `${Math.min(progress, 100)}%`;
     document.getElementById('goal-text').textContent = `${Math.round(progress)}%`;
 
+    // Inputs
+    if (document.activeElement.id !== 'main-assets-input') document.getElementById('main-assets-input').value = fd.current_liquid_assets || '';
+    if (document.activeElement.id !== 'main-goal-input') document.getElementById('main-goal-input').value = fd.horizon_goal || '';
+
+    // CRUD Lists
     const ledger = document.getElementById('ledger-wrapper');
     ledger.innerHTML = '';
     let totalIn = 0, totalOut = 0;
     fd.transactions.forEach(t => {
         if (t.type === 'deposit') totalIn += t.amount; else totalOut += t.amount;
-        ledger.innerHTML += `<div class="crud-item"><span>${t.type}</span><span class="font-bold">${t.label}</span><span>$${t.amount}</span><button onclick="deleteItem('transactions', ${t.id})">Delete</button></div>`;
+        ledger.innerHTML += `<div class="crud-item"><span>${t.type}</span><span class="font-bold">${t.label}</span><span>$${t.amount.toLocaleString()}</span><button onclick="deleteItem('transactions', ${t.id})">Delete</button></div>`;
     });
-    document.getElementById('net-surplus').textContent = `Surplus: $${totalIn - totalOut}`;
+    document.getElementById('net-surplus').textContent = `$${(totalIn - totalOut).toLocaleString()} Surplus`;
 
     const debtList = document.getElementById('debt-wrapper');
     debtList.innerHTML = '';
-    let totalDebt = 0;
+    let totalDebt = 0, totalPmt = 0;
     fd.bills.forEach(b => {
-        totalDebt += b.balance;
-        debtList.innerHTML += `<div class="crud-item"><span></span><span class="font-bold">${b.name}</span><span>$${b.balance}</span><button onclick="deleteItem('bills', ${b.id})">Delete</button></div>`;
+        totalDebt += b.balance; totalPmt += b.payment;
+        debtList.innerHTML += `<div class="crud-item"><span></span><span class="font-bold">${b.name}</span><span>$${b.balance.toLocaleString()}</span><button onclick="deleteItem('bills', ${b.id})">Delete</button></div>`;
     });
-    document.getElementById('total-debt').textContent = `Debt: $${totalDebt}`;
+    document.getElementById('total-debt').textContent = `$${totalDebt.toLocaleString()} Total Liability`;
+    document.getElementById('debt-months').textContent = totalPmt > 0 ? `${Math.ceil(totalDebt / totalPmt)} Months to Zero` : '0 Months to Zero';
 
     lucide.createIcons();
 }
 
-// --- EVENTS ---
+// --- 5. EVENTS ---
 document.getElementById('login-btn').addEventListener('click', async () => {
     const { error } = await supabaseClient.auth.signInWithPassword({ email: document.getElementById('auth-email').value.trim(), password: document.getElementById('auth-password').value });
     if (error) alert(error.message);
@@ -122,7 +134,6 @@ document.getElementById('signup-btn').addEventListener('click', async () => {
     if (error) alert(error.message);
 });
 document.getElementById('logout-btn').addEventListener('click', () => supabaseClient.auth.signOut());
-document.getElementById('theme-toggle').addEventListener('click', () => { appState.theme = appState.theme === 'light' ? 'dark' : 'light'; render(); });
 document.querySelector('.sidebar-nav').addEventListener('click', (e) => { const btn = e.target.closest('.nav-item'); if (btn) { appState.activeTab = btn.dataset.tab; render(); } });
 document.getElementById('main-assets-input').addEventListener('blur', (e) => syncToCloud({ current_liquid_assets: Number(e.target.value) }));
 document.getElementById('main-goal-input').addEventListener('blur', (e) => syncToCloud({ horizon_goal: Number(e.target.value) }));
