@@ -55,34 +55,33 @@
                     <nav class="sidebar-nav">
                         <h3 class="nav-section-title">Intelligence</h3>
                         <button class="nav-item active" data-tab="dashboard">
-                            <i data-lucide="activity" class="icon"></i>
+                            <i data-lucide="activity"></i>
                             <span class="font-bold text-sm">Dashboard</span>
                         </button>
                         <button class="nav-item" data-tab="simulations">
-                            <i data-lucide="line-chart" class="icon"></i>
+                            <i data-lucide="line-chart"></i>
                             <span class="font-bold text-sm">Monte Carlo</span>
                         </button>
                         
                         <h3 class="nav-section-title">Protocols</h3>
                         <button class="nav-item" data-tab="budget">
-                            <i data-lucide="wallet" class="icon"></i>
+                            <i data-lucide="wallet"></i>
                             <span class="font-bold text-sm">Cashflow Routing</span>
                         </button>
                         <button class="nav-item" data-tab="debt">
-                            <i data-lucide="layers" class="icon"></i>
+                            <i data-lucide="layers"></i>
                             <span class="font-bold text-sm">Liability Snowball</span>
                         </button>
                     </nav>
                 </aside>
 
                 <main class="main-content">
-                    
                     <section id="dashboard" class="tab-content active">
                         <div class="card">
-                            <div class="flex justify-between items-start mb-6">
+                            <div class="flex justify-between items-start mb-8">
                                 <div>
                                     <h3 class="text-2xl font-bold text-main">Baseline Assessment</h3>
-                                    <p id="baseline-strategy" class="text-sm text-slate-500">Initializing strategy...</p>
+                                    <p id="baseline-strategy" class="text-sm text-slate-500">Strategy Engine Active</p>
                                 </div>
                                 <div class="decade-selector">
                                     <button class="decade-btn" data-decade="20">20s</button>
@@ -91,19 +90,19 @@
                                     <button class="decade-btn" data-decade="50">50s</button>
                                 </div>
                             </div>
-                            <div class="grid md:grid-cols-2">
-                                <div class="flex items-center gap-4">
+                            <div class="grid md:grid-cols-2 items-center">
+                                <div class="flex items-center gap-6">
                                     <div class="efficiency-ring-container">
-                                        <svg class="efficiency-ring-svg">
-                                            <circle cx="30" cy="30" r="26" class="ring-bg"></circle>
-                                            <circle cx="30" cy="30" r="26" class="ring-progress" id="efficiency-ring"></circle>
+                                        <svg class="efficiency-ring-svg" viewBox="0 0 80 80">
+                                            <circle cx="40" cy="40" r="36" class="ring-bg"></circle>
+                                            <circle cx="40" cy="40" r="36" class="ring-progress" id="efficiency-ring"></circle>
                                         </svg>
-                                        <span class="text-sm font-bold text-main" id="efficiency-score">0%</span>
+                                        <span id="efficiency-score">0%</span>
                                     </div>
                                     <p class="text-sm font-bold text-main">Efficiency Score</p>
                                 </div>
                                 <div class="flex flex-col justify-center">
-                                    <div class="flex justify-between mb-1">
+                                    <div class="flex justify-between mb-2">
                                         <span class="text-xs font-bold text-slate-500 uppercase">Goal Progress</span>
                                         <span id="goal-text" class="text-xs font-bold text-blue">0%</span>
                                     </div>
@@ -115,11 +114,11 @@
                         </div>
                         <div class="grid md:grid-cols-2 mt-6">
                             <div class="card">
-                                <h3 class="text-xs font-bold text-slate-500 uppercase mb-2">Liquid Assets ($)</h3>
+                                <h3 class="text-xs font-bold text-slate-500 uppercase mb-3">Liquid Assets ($)</h3>
                                 <input type="number" id="main-assets-input" class="text-3xl font-extrabold text-blue w-full bg-transparent border-none outline-none">
                             </div>
                             <div class="card">
-                                <h3 class="text-xs font-bold text-slate-500 uppercase mb-2">Horizon Goal ($)</h3>
+                                <h3 class="text-xs font-bold text-slate-500 uppercase mb-3">Horizon Goal ($)</h3>
                                 <input type="number" id="main-goal-input" class="text-3xl font-extrabold text-main w-full bg-transparent border-none outline-none">
                             </div>
                         </div>
@@ -144,7 +143,7 @@
                                 <select id="trans-type" class="input-field"><option value="deposit">Deposit</option><option value="bill">Bill</option></select>
                                 <input type="text" id="trans-label" class="input-field" placeholder="Label">
                                 <input type="number" id="trans-amount" class="input-field" placeholder="Amount">
-                                <button id="add-trans-btn" class="btn-primary">Add Entry</button>
+                                <button id="add-trans-btn" class="btn-primary">Add</button>
                             </div>
                             <div id="ledger-wrapper"></div>
                             <div class="mt-6 pt-6 border-t border-border">
@@ -160,7 +159,7 @@
                                 <input type="text" id="debt-name" class="input-field" placeholder="Debt Name">
                                 <input type="number" id="debt-bal" class="input-field" placeholder="Balance">
                                 <input type="number" id="debt-pmt" class="input-field" placeholder="Payment">
-                                <button id="add-debt-btn" class="btn-primary">Add Debt</button>
+                                <button id="add-debt-btn" class="btn-primary">Add</button>
                             </div>
                             <div id="debt-wrapper"></div>
                             <div class="mt-6 pt-6 border-t border-border flex justify-between items-end">
@@ -173,7 +172,7 @@
                     <footer class="app-footer">
                         <div class="flex items-center justify-center gap-2">
                             <i data-lucide="cloud" class="text-blue w-5 h-5"></i>
-                            <span class="text-sm font-bold text-slate-400 uppercase tracking-wider">Powered by Cirrus Automations</span>
+                            <span class="text-sm font-bold text-slate-400 uppercase">Powered by Cirrus Automations</span>
                         </div>
                     </footer>
                 </main>
