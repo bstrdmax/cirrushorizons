@@ -1,53 +1,193 @@
-#cirrus-horizons-wrapper {
-    --blue: #007df0; --emerald: #10b981; --rose: #f43f5e;
-    --slate-50: #f8fafc; --slate-100: #f1f5f9; --slate-200: #e2e8f0; --slate-300: #cbd5e1; --slate-400: #94a3b8; --slate-500: #64748b; --slate-900: #0f172a;
-    --bg-main: var(--slate-100); --bg-card: #ffffff; --bg-header: #ffffff; --text-main: var(--slate-900); --border: var(--slate-200); --input-bg: var(--slate-50); --slate-50-alpha: rgba(248, 250, 252, 0.6);
+// --- 1. SUPABASE CONFIGURATION ---
+const SUPABASE_URL = 'https://tdgudmnrqhlkwefthdat.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkZ3VkbW5ycWhsa3dlZnRoZGF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyMTI5MjksImV4cCI6MjA5MDc4ODkyOX0.Rlr-BS4x_WyMTiRBTFGQdddV8b0dtKfNzKBz1YOsJLo'; 
+
+// Debugging line: This will show in your browser console if the key is loading
+console.log("Initializing Supabase with URL:", SUPABASE_URL);
+
+// Initialize the client
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// --- GLOBAL STATE ---
+let appState = {
+    activeTab: 'dashboard',
+    theme: 'dark',
+    user: null,
+    isSimulating: false,
+    financialData: {
+        current_liquid_assets: 0,
+        horizon_goal: 0,
+        starting_decade: 30,
+        bills: [],        // Debt CRUD array
+        transactions: []  // Cashflow CRUD array
+    }
+};
+
+const baselineData = {
+    20: { label: "20s", strategy: "Aggressive Growth Automation", score: 92 },
+    30: { label: "30s", strategy: "Debt Snowball & Tax Maximization", score: 78 },
+    40: { label: "40s", strategy: "Asset Rebalancing & Catch-up", score: 64 },
+    50: { label: "50s", strategy: "Preservation & Distribution", score: 85 }
+};
+
+// --- DATA SYNC ---
+supabaseClient.auth.onAuthStateChange(async (event, session) => {
+    if (session) {
+        appState.user = session.user;
+        await fetchUserFinancials(session.user.id);
+    } else {
+        appState.user = null;
+        render();
+    }
+});
+
+async function fetchUserFinancials(userId) {
+    const { data } = await supabaseClient.from('profiles').select('*').eq('id', userId).single();
+    if (data) {
+        appState.financialData = { 
+            ...appState.financialData, 
+            ...data,
+            bills: data.bills || [],
+            transactions: data.transactions || []
+        };
+    }
+    render();
 }
 
-#cirrus-horizons-wrapper.dark-theme {
-    --bg-main: #0b1120; --bg-card: #1e293b; --bg-header: #1e293b; --text-main: #f8fafc; --border: #334155; --input-bg: #0f172a; --slate-50-alpha: rgba(15, 23, 42, 0.6);
+async function syncToCloud(updates) {
+    if (!appState.user) return;
+    appState.financialData = { ...appState.financialData, ...updates };
+    render(); // Optimistic UI
+    await supabaseClient.from('profiles').upsert({ id: appState.user.id, ...updates });
 }
 
-#cirrus-horizons-wrapper * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-#cirrus-horizons-wrapper { background: var(--bg-main); color: var(--text-main); min-height: 100vh; transition: background 0.3s; }
+// --- CRUD LOGIC ---
 
-/* Layout */
-.container { max-width: 1200px; margin: 0 auto; padding: 0 1rem; }
-.flex { display: flex; } .flex-col { flex-direction: column; } .items-center { align-items: center; } .justify-between { justify-content: space-between; } .gap-3 { gap: 0.75rem; } .gap-4 { gap: 1rem; } .gap-6 { gap: 1.5rem; } .gap-8 { gap: 2rem; }
-.grid { display: grid; } .w-full { width: 100%; }
+function addTransaction() {
+    const type = document.getElementById('trans-type').value;
+    const label = document.getElementById('trans-label').value.trim();
+    const amount = Number(document.getElementById('trans-amount').value);
+    if (!label || amount <= 0) return;
+    appState.financialData.transactions.push({ id: Date.now(), type, label, amount });
+    document.getElementById('trans-label').value = '';
+    document.getElementById('trans-amount').value = '';
+    syncToCloud({ transactions: appState.financialData.transactions });
+}
 
-/* Auth */
-#auth-overlay { position: fixed; inset: 0; background: var(--bg-main); z-index: 100; display: none; align-items: center; justify-content: center; }
-#auth-overlay.active { display: flex; }
-.auth-card { background: var(--bg-card); padding: 3rem; border-radius: 1rem; width: 400px; text-align: center; border: 1px solid var(--border); }
+function addDebt() {
+    const name = document.getElementById('debt-name').value.trim();
+    const balance = Number(document.getElementById('debt-bal').value);
+    const payment = Number(document.getElementById('debt-pmt').value);
+    if (!name || balance <= 0) return;
+    appState.financialData.bills.push({ id: Date.now(), name, balance, payment });
+    document.getElementById('debt-name').value = '';
+    document.getElementById('debt-bal').value = '';
+    document.getElementById('debt-pmt').value = '';
+    syncToCloud({ bills: appState.financialData.bills });
+}
 
-/* Components */
-header { background: var(--bg-header); border-bottom: 1px solid var(--border); padding: 1rem 0; }
-.card { background: var(--bg-card); padding: 2rem; border-radius: 1rem; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-.nav-item { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; border-radius: 0.5rem; color: var(--slate-500); cursor: pointer; background: none; border: none; transition: 0.2s; }
-.nav-item:hover { background: var(--blue-alpha); color: var(--text-main); }
-.nav-item.active { background: var(--blue); color: #fff; }
-.input-field { background: var(--input-bg); border: 1px solid var(--border); border-radius: 0.5rem; padding: 0.75rem; color: var(--text-main); outline: none; }
-.btn-primary { background: var(--blue); color: #fff; border: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 700; cursor: pointer; transition: 0.2s; }
-.btn-outline { background: none; border: 1px solid var(--border); color: var(--text-main); padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 700; cursor: pointer; }
+// --- RENDER ENGINE ---
 
-/* CRUD List Styling */
-.crud-item { display: grid; grid-template-columns: 1fr 2fr 1fr auto; padding: 0.75rem 1rem; background: var(--input-bg); border-radius: 0.5rem; margin-bottom: 0.5rem; border: 1px solid var(--border); align-items: center; }
-.badge-in { color: var(--emerald); font-weight: 800; font-size: 0.65rem; text-transform: uppercase; }
-.badge-out { color: var(--rose); font-weight: 800; font-size: 0.65rem; text-transform: uppercase; }
+function render() {
+    const fd = appState.financialData;
+    
+    // Auth View
+    document.getElementById('auth-overlay').classList.toggle('active', !appState.user);
+    document.getElementById('app-container').style.display = appState.user ? 'flex' : 'none';
+    if (!appState.user) return;
 
-/* Rings & Bars */
-.efficiency-ring-container { width: 3.5rem; height: 3.5rem; position: relative; display: flex; align-items: center; justify-content: center; }
-.efficiency-ring-svg { position: absolute; inset: 0; transform: rotate(-90deg); }
-.ring-bg { fill: none; stroke: var(--border); stroke-width: 4; }
-.ring-progress { fill: none; stroke: var(--blue); stroke-width: 4; stroke-dasharray: 125; stroke-dashoffset: 125; transition: 1s ease-in-out; }
-.progress-bar-container { background: var(--input-bg); border-radius: 99px; height: 8px; border: 1px solid var(--border); overflow: hidden; }
-.progress-bar-fill { background: var(--blue); height: 100%; transition: 0.5s; }
+    // Theme & Active Tab
+    const wrapper = document.getElementById('cirrus-horizons-wrapper');
+    wrapper.className = appState.theme === 'dark' ? 'dark-theme' : '';
+    document.getElementById('theme-icon').setAttribute('data-lucide', appState.theme === 'dark' ? 'sun' : 'moon');
+    
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.tab === appState.activeTab));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === appState.activeTab));
 
-/* Sidebar */
-@media (min-width: 1024px) { .layout-main { flex-direction: row; } .sidebar { width: 16rem; flex-shrink: 0; } .main-content { flex: 1; } }
-.nav-section-title { font-size: 0.7rem; color: var(--slate-400); text-transform: uppercase; margin: 1.5rem 0 0.5rem 1rem; }
-.tab-content { display: none; } .tab-content.active { display: block; animation: fadeIn 0.4s; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-.app-footer { margin-top: auto; padding: 3rem 0; text-align: center; }
-.spin { animation: spin 1s linear infinite; } @keyframes spin { to { transform: rotate(360deg); } }
+    // Dashboard Render
+    const dec = baselineData[fd.starting_decade];
+    document.getElementById('baseline-strategy').textContent = dec.strategy;
+    document.getElementById('efficiency-score').textContent = `${dec.score}%`;
+    document.getElementById('efficiency-ring').style.strokeDashoffset = 125 - (125 * dec.score) / 100;
+    
+    const progress = fd.horizon_goal > 0 ? (fd.current_liquid_assets / fd.horizon_goal) * 100 : 0;
+    document.getElementById('goal-bar').style.width = `${Math.min(progress, 100)}%`;
+    document.getElementById('goal-text').textContent = `${Math.round(progress)}%`;
+    
+    if (document.activeElement.id !== 'main-assets-input') document.getElementById('main-assets-input').value = fd.current_liquid_assets || '';
+    if (document.activeElement.id !== 'main-goal-input') document.getElementById('main-goal-input').value = fd.horizon_goal || '';
+
+    // Cashflow CRUD Render
+    const ledger = document.getElementById('ledger-wrapper');
+    ledger.innerHTML = '';
+    let totalIn = 0, totalOut = 0;
+    fd.transactions.forEach(t => {
+        if (t.type === 'deposit') totalIn += t.amount; else totalOut += t.amount;
+        const div = document.createElement('div');
+        div.className = 'crud-item';
+        div.innerHTML = `<span class="${t.type === 'deposit' ? 'badge-in' : 'badge-out'}">${t.type}</span><span class="font-bold">${t.label}</span><span>$${t.amount}</span><button class="btn-danger" style="color:var(--rose); cursor:pointer;" onclick="deleteItem('transactions', ${t.id})">Delete</button>`;
+        ledger.appendChild(div);
+    });
+    document.getElementById('net-surplus').textContent = `$${(totalIn - totalOut).toLocaleString()}`;
+
+    // Debt CRUD Render
+    const debtList = document.getElementById('debt-wrapper');
+    debtList.innerHTML = '';
+    let totalDebt = 0, totalPmt = 0;
+    fd.bills.forEach(b => {
+        totalDebt += b.balance; totalPmt += b.payment;
+        const div = document.createElement('div');
+        div.className = 'crud-item';
+        div.innerHTML = `<span></span><span class="font-bold">${b.name}</span><span>$${b.balance}</span><button class="btn-danger" style="color:var(--rose); cursor:pointer;" onclick="deleteItem('bills', ${b.id})">Delete</button>`;
+        debtList.appendChild(div);
+    });
+    document.getElementById('total-debt').textContent = `$${totalDebt.toLocaleString()}`;
+    document.getElementById('debt-months').textContent = totalPmt > 0 ? `${Math.ceil(totalDebt / totalPmt)} Months` : '0 Months';
+
+    lucide.createIcons();
+}
+
+// Global scope helpers for onclick
+window.deleteItem = (key, id) => {
+    appState.financialData[key] = appState.financialData[key].filter(i => i.id !== id);
+    syncToCloud({ [key]: appState.financialData[key] });
+};
+
+// --- EVENTS ---
+function bindEvents() {
+    document.getElementById('login-btn').addEventListener('click', async () => {
+        const { error } = await supabaseClient.auth.signInWithPassword({ email: document.getElementById('auth-email').value, password: document.getElementById('auth-password').value });
+        if (error) alert(error.message);
+    });
+    document.getElementById('signup-btn').addEventListener('click', async () => {
+        const { error } = await supabaseClient.auth.signUp({ email: document.getElementById('auth-email').value, password: document.getElementById('auth-password').value });
+        if (error) alert(error.message);
+    });
+    document.getElementById('logout-btn').addEventListener('click', () => supabaseClient.auth.signOut());
+    document.getElementById('theme-toggle').addEventListener('click', () => { appState.theme = appState.theme === 'light' ? 'dark' : 'light'; render(); });
+    
+    document.querySelector('.sidebar-nav').addEventListener('click', (e) => {
+        const btn = e.target.closest('.nav-item');
+        if (btn) { appState.activeTab = btn.dataset.tab; render(); }
+    });
+
+    document.getElementById('main-assets-input').addEventListener('blur', (e) => syncToCloud({ current_liquid_assets: Number(e.target.value) }));
+    document.getElementById('main-goal-input').addEventListener('blur', (e) => syncToCloud({ horizon_goal: Number(e.target.value) }));
+    
+    document.querySelectorAll('.decade-btn').forEach(b => b.addEventListener('click', () => syncToCloud({ starting_decade: Number(b.dataset.decade) })));
+    document.getElementById('add-trans-btn').addEventListener('click', addTransaction);
+    document.getElementById('add-debt-btn').addEventListener('click', addDebt);
+
+    document.getElementById('run-sim-btn').addEventListener('click', () => {
+        appState.isSimulating = true; render();
+        setTimeout(() => {
+            const base = appState.financialData.current_liquid_assets;
+            document.getElementById('sim-p10').textContent = `$${Math.round(base * 1.4).toLocaleString()}`;
+            document.getElementById('sim-p50').textContent = `$${Math.round(base * 1.9).toLocaleString()}`;
+            document.getElementById('sim-p90').textContent = `$${Math.round(base * 2.6).toLocaleString()}`;
+            appState.isSimulating = false; document.getElementById('sim-results').style.opacity = '1'; render();
+        }, 1500);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => { bindEvents(); render(); });
