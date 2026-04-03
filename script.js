@@ -1,6 +1,5 @@
 /**
- * CIRRUS HORIZONS - FULL ENGINE
- * Every tab is now a working calculator synced to Supabase.
+ * CIRRUS HORIZONS - FULL INTERACTIVE ENGINE
  */
 
 const SUPABASE_URL = 'https://tdgudmnrqhlkwefthdat.supabase.co';
@@ -8,247 +7,186 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// --- STATE MANAGEMENT ---
+// --- GLOBAL STATE ---
 let appState = {
     activeTab: 'dashboard',
-    theme: 'dark', 
-    user: null, 
+    theme: 'dark',
+    user: null,
     isSimulating: false,
     financialData: {
         current_liquid_assets: 0,
         horizon_goal: 0,
-        monthly_income: 0,
-        monthly_expenses: 0,
-        total_debt: 0,
-        monthly_debt_payment: 0
+        starting_decade: 30,
+        bills: [],        // Debt CRUD array
+        transactions: []  // Cashflow CRUD array
     }
 };
 
-// --- AUTH & SYNC ---
+const baselineData = {
+    20: { label: "20s", strategy: "Aggressive Growth Automation", score: 92 },
+    30: { label: "30s", strategy: "Debt Snowball & Tax Maximization", score: 78 },
+    40: { label: "40s", strategy: "Asset Rebalancing & Catch-up", score: 64 },
+    50: { label: "50s", strategy: "Preservation & Distribution", score: 85 }
+};
+
+// --- DATA SYNC ---
 supabaseClient.auth.onAuthStateChange(async (event, session) => {
-    if (session && session.user) {
+    if (session) {
         appState.user = session.user;
         await fetchUserFinancials(session.user.id);
     } else {
         appState.user = null;
-        render(); 
+        render();
     }
 });
 
 async function fetchUserFinancials(userId) {
-    try {
-        const { data, error } = await supabaseClient.from('profiles').select('*').eq('id', userId).single();
-        if (error && error.code !== 'PGRST116') throw error; 
-        if (data) {
-            appState.financialData = { ...appState.financialData, ...data };
-        }
-        render();
-    } catch (error) {
-        console.error("Fetch Error:", error.message);
-        render();
+    const { data } = await supabaseClient.from('profiles').select('*').eq('id', userId).single();
+    if (data) {
+        appState.financialData = { 
+            ...appState.financialData, 
+            ...data,
+            bills: data.bills || [],
+            transactions: data.transactions || []
+        };
     }
+    render();
 }
 
 async function syncToCloud(updates) {
     if (!appState.user) return;
-    
-    // Optimistic UI Update
     appState.financialData = { ...appState.financialData, ...updates };
-    render();
-
-    try {
-        const { error } = await supabaseClient.from('profiles').upsert({ id: appState.user.id, ...updates });
-        if (error) throw error;
-    } catch (err) {
-        console.error("Sync Error:", err.message);
-    }
+    render(); // Optimistic UI
+    await supabaseClient.from('profiles').upsert({ id: appState.user.id, ...updates });
 }
 
-// --- ALGORITHMS ---
+// --- CRUD LOGIC ---
 
-// Monte Carlo Math (Deterministic Mock for 10 years)
-function runProjection(currentAssets) {
-    const base = Number(currentAssets) || 0;
-    // P10 = 4% growth, P50 = 7% growth, P90 = 10% growth over 10 years
-    const p10 = base * Math.pow(1.04, 10);
-    const p50 = base * Math.pow(1.07, 10);
-    const p90 = base * Math.pow(1.10, 10);
-    
-    return {
-        p10: Math.round(p10),
-        p50: Math.round(p50),
-        p90: Math.round(p90)
-    };
+function addTransaction() {
+    const type = document.getElementById('trans-type').value;
+    const label = document.getElementById('trans-label').value.trim();
+    const amount = Number(document.getElementById('trans-amount').value);
+    if (!label || amount <= 0) return;
+    appState.financialData.transactions.push({ id: Date.now(), type, label, amount });
+    document.getElementById('trans-label').value = '';
+    document.getElementById('trans-amount').value = '';
+    syncToCloud({ transactions: appState.financialData.transactions });
 }
 
-// Formatting Helper
-const formatCurrency = (num) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(num);
-};
+function addDebt() {
+    const name = document.getElementById('debt-name').value.trim();
+    const balance = Number(document.getElementById('debt-bal').value);
+    const payment = Number(document.getElementById('debt-pmt').value);
+    if (!name || balance <= 0) return;
+    appState.financialData.bills.push({ id: Date.now(), name, balance, payment });
+    document.getElementById('debt-name').value = '';
+    document.getElementById('debt-bal').value = '';
+    document.getElementById('debt-pmt').value = '';
+    syncToCloud({ bills: appState.financialData.bills });
+}
 
-// --- RENDER LOGIC ---
+// --- RENDER ENGINE ---
+
 function render() {
     const fd = appState.financialData;
+    
+    // Auth View
+    document.getElementById('auth-overlay').classList.toggle('active', !appState.user);
+    document.getElementById('app-container').style.display = appState.user ? 'flex' : 'none';
+    if (!appState.user) return;
 
-    // 1. Auth Overlay
-    if (!appState.user) {
-        document.getElementById('auth-overlay').classList.add('active');
-        document.getElementById('app-container').style.display = 'none';
-        return; 
-    } else {
-        document.getElementById('auth-overlay').classList.remove('active');
-        document.getElementById('app-container').style.display = 'flex';
-        document.getElementById('user-avatar').textContent = appState.user.email.charAt(0).toUpperCase();
-    }
-
-    // 2. Theme
+    // Theme & Active Tab
     const wrapper = document.getElementById('cirrus-horizons-wrapper');
-    const themeIcon = document.getElementById('theme-icon');
-    if (appState.theme === 'dark') {
-        wrapper.classList.add('dark-theme');
-        themeIcon.setAttribute('data-lucide', 'sun');
-    } else {
-        wrapper.classList.remove('dark-theme');
-        themeIcon.setAttribute('data-lucide', 'moon');
-    }
+    wrapper.className = appState.theme === 'dark' ? 'dark-theme' : '';
+    document.getElementById('theme-icon').setAttribute('data-lucide', appState.theme === 'dark' ? 'sun' : 'moon');
+    
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.tab === appState.activeTab));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === appState.activeTab));
 
-    // 3. Tab Routing
-    document.querySelectorAll('.nav-item').forEach(nav => {
-        nav.classList.toggle('active', nav.getAttribute('data-tab') === appState.activeTab);
+    // Dashboard Render
+    const dec = baselineData[fd.starting_decade];
+    document.getElementById('baseline-strategy').textContent = dec.strategy;
+    document.getElementById('efficiency-score').textContent = `${dec.score}%`;
+    document.getElementById('efficiency-ring').style.strokeDashoffset = 125 - (125 * dec.score) / 100;
+    
+    const progress = fd.horizon_goal > 0 ? (fd.current_liquid_assets / fd.horizon_goal) * 100 : 0;
+    document.getElementById('goal-bar').style.width = `${Math.min(progress, 100)}%`;
+    document.getElementById('goal-text').textContent = `${Math.round(progress)}%`;
+    
+    if (document.activeElement.id !== 'main-assets-input') document.getElementById('main-assets-input').value = fd.current_liquid_assets || '';
+    if (document.activeElement.id !== 'main-goal-input') document.getElementById('main-goal-input').value = fd.horizon_goal || '';
+
+    // Cashflow CRUD Render
+    const ledger = document.getElementById('ledger-wrapper');
+    ledger.innerHTML = '';
+    let totalIn = 0, totalOut = 0;
+    fd.transactions.forEach(t => {
+        if (t.type === 'deposit') totalIn += t.amount; else totalOut += t.amount;
+        const div = document.createElement('div');
+        div.className = 'crud-item';
+        div.innerHTML = `<span class="${t.type === 'deposit' ? 'badge-in' : 'badge-out'}">${t.type}</span><span class="font-bold">${t.label}</span><span>$${t.amount}</span><button class="btn-danger" style="color:var(--rose); cursor:pointer;" onclick="deleteItem('transactions', ${t.id})">Delete</button>`;
+        ledger.appendChild(div);
     });
-    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-    document.getElementById(appState.activeTab).classList.add('active');
+    document.getElementById('net-surplus').textContent = `$${(totalIn - totalOut).toLocaleString()}`;
 
-    // 4. Update Inputs (Only if they aren't currently focused to prevent cursor jumping)
-    if (document.activeElement.id !== 'liquid-assets-input') document.getElementById('liquid-assets-input').value = fd.current_liquid_assets || '';
-    if (document.activeElement.id !== 'horizon-goal-input') document.getElementById('horizon-goal-input').value = fd.horizon_goal || '';
-    if (document.activeElement.id !== 'income-input') document.getElementById('income-input').value = fd.monthly_income || '';
-    if (document.activeElement.id !== 'expenses-input') document.getElementById('expenses-input').value = fd.monthly_expenses || '';
-    if (document.activeElement.id !== 'debt-total-input') document.getElementById('debt-total-input').value = fd.total_debt || '';
-    if (document.activeElement.id !== 'debt-payment-input') document.getElementById('debt-payment-input').value = fd.monthly_debt_payment || '';
-
-    // 5. Calculators Execution
-    
-    // -> Dashboard: Goal Progress
-    let progress = fd.horizon_goal > 0 ? ((fd.current_liquid_assets / fd.horizon_goal) * 100) : 0;
-    document.getElementById('goal-progress-fill').style.width = `${Math.min(progress, 100)}%`;
-    document.getElementById('progress-percentage').textContent = `${Math.min(Math.round(progress), 100)}%`;
-
-    // -> Budget: Cashflow
-    let cashflow = (fd.monthly_income || 0) - (fd.monthly_expenses || 0);
-    document.getElementById('cashflow-result').textContent = formatCurrency(cashflow);
-    document.getElementById('cashflow-result').className = cashflow >= 0 ? "text-3xl font-extrabold text-emerald mt-1" : "text-3xl font-extrabold text-rose mt-1";
-
-    // -> Debt: Time to Zero
-    let debtTime = "0 Months";
-    if (fd.total_debt > 0 && fd.monthly_debt_payment > 0) {
-        let months = Math.ceil(fd.total_debt / fd.monthly_debt_payment);
-        debtTime = `${months} Months (${(months/12).toFixed(1)} Years)`;
-    } else if (fd.total_debt > 0 && fd.monthly_debt_payment === 0) {
-        debtTime = "Infinite (No Payment)";
-    }
-    document.getElementById('debt-time-result').textContent = debtTime;
-
-    // -> Simulations: Button State
-    const simNormal = document.getElementById('sim-icon-normal');
-    const simLoading = document.getElementById('sim-icon-loading');
-    const resultsPanel = document.getElementById('sim-results');
-    
-    if (appState.isSimulating) {
-        simNormal.style.display = 'none';
-        simLoading.style.display = 'block';
-        resultsPanel.style.opacity = '0.3';
-    } else {
-        simNormal.style.display = 'block';
-        simLoading.style.display = 'none';
-    }
+    // Debt CRUD Render
+    const debtList = document.getElementById('debt-wrapper');
+    debtList.innerHTML = '';
+    let totalDebt = 0, totalPmt = 0;
+    fd.bills.forEach(b => {
+        totalDebt += b.balance; totalPmt += b.payment;
+        const div = document.createElement('div');
+        div.className = 'crud-item';
+        div.innerHTML = `<span></span><span class="font-bold">${b.name}</span><span>$${b.balance}</span><button class="btn-danger" style="color:var(--rose); cursor:pointer;" onclick="deleteItem('bills', ${b.id})">Delete</button>`;
+        debtList.appendChild(div);
+    });
+    document.getElementById('total-debt').textContent = `$${totalDebt.toLocaleString()}`;
+    document.getElementById('debt-months').textContent = totalPmt > 0 ? `${Math.ceil(totalDebt / totalPmt)} Months` : '0 Months';
 
     lucide.createIcons();
 }
 
+// Global scope helpers for onclick
+window.deleteItem = (key, id) => {
+    appState.financialData[key] = appState.financialData[key].filter(i => i.id !== id);
+    syncToCloud({ [key]: appState.financialData[key] });
+};
+
 // --- EVENTS ---
 function bindEvents() {
-    // Auth
-    document.getElementById('signup-btn').addEventListener('click', async () => {
-        const email = document.getElementById('auth-email').value.trim();
-        const password = document.getElementById('auth-password').value;
-        const errorEl = document.getElementById('auth-error');
-        errorEl.style.display = 'none';
-        
-        const { error } = await supabaseClient.auth.signUp({ email, password });
-        if (error) { errorEl.textContent = error.message; errorEl.style.display = 'block'; }
-    });
-
     document.getElementById('login-btn').addEventListener('click', async () => {
-        const email = document.getElementById('auth-email').value.trim();
-        const password = document.getElementById('auth-password').value;
-        const errorEl = document.getElementById('auth-error');
-        errorEl.style.display = 'none';
-        
-        const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-        if (error) { errorEl.textContent = error.message; errorEl.style.display = 'block'; }
+        const { error } = await supabaseClient.auth.signInWithPassword({ email: document.getElementById('auth-email').value, password: document.getElementById('auth-password').value });
+        if (error) alert(error.message);
     });
-
-    document.getElementById('logout-btn').addEventListener('click', async () => {
-        await supabaseClient.auth.signOut();
+    document.getElementById('signup-btn').addEventListener('click', async () => {
+        const { error } = await supabaseClient.auth.signUp({ email: document.getElementById('auth-email').value, password: document.getElementById('auth-password').value });
+        if (error) alert(error.message);
     });
-
-    // Theme & Nav
-    document.getElementById('theme-toggle').addEventListener('click', () => {
-        appState.theme = appState.theme === 'light' ? 'dark' : 'light';
-        render();
-    });
-
+    document.getElementById('logout-btn').addEventListener('click', () => supabaseClient.auth.signOut());
+    document.getElementById('theme-toggle').addEventListener('click', () => { appState.theme = appState.theme === 'light' ? 'dark' : 'light'; render(); });
+    
     document.querySelector('.sidebar-nav').addEventListener('click', (e) => {
-        const navItem = e.target.closest('.nav-item');
-        if (navItem) {
-            appState.activeTab = navItem.getAttribute('data-tab');
-            render();
-        }
+        const btn = e.target.closest('.nav-item');
+        if (btn) { appState.activeTab = btn.dataset.tab; render(); }
     });
 
-    // Data Syncing (Inputs sync to Supabase when user clicks away)
-    const inputs = [
-        { id: 'liquid-assets-input', key: 'current_liquid_assets' },
-        { id: 'horizon-goal-input', key: 'horizon_goal' },
-        { id: 'income-input', key: 'monthly_income' },
-        { id: 'expenses-input', key: 'monthly_expenses' },
-        { id: 'debt-total-input', key: 'total_debt' },
-        { id: 'debt-payment-input', key: 'monthly_debt_payment' }
-    ];
+    document.getElementById('main-assets-input').addEventListener('blur', (e) => syncToCloud({ current_liquid_assets: Number(e.target.value) }));
+    document.getElementById('main-goal-input').addEventListener('blur', (e) => syncToCloud({ horizon_goal: Number(e.target.value) }));
+    
+    document.querySelectorAll('.decade-btn').forEach(b => b.addEventListener('click', () => syncToCloud({ starting_decade: Number(b.dataset.decade) })));
+    document.getElementById('add-trans-btn').addEventListener('click', addTransaction);
+    document.getElementById('add-debt-btn').addEventListener('click', addDebt);
 
-    inputs.forEach(inputObj => {
-        document.getElementById(inputObj.id).addEventListener('blur', (e) => {
-            let update = {};
-            update[inputObj.key] = Number(e.target.value) || 0;
-            syncToCloud(update);
-        });
-    });
-
-    // Simulation Trigger
     document.getElementById('run-sim-btn').addEventListener('click', () => {
-        if (appState.isSimulating) return; 
-        
-        appState.isSimulating = true;
-        render();
-        
-        // Simulating 1.5 seconds of heavy "math"
+        appState.isSimulating = true; render();
         setTimeout(() => {
-            const projections = runProjection(appState.financialData.current_liquid_assets);
-            document.getElementById('sim-p10').textContent = formatCurrency(projections.p10);
-            document.getElementById('sim-p50').textContent = formatCurrency(projections.p50);
-            document.getElementById('sim-p90').textContent = formatCurrency(projections.p90);
-            
-            appState.isSimulating = false;
-            render();
-            
-            // Fade results in
-            document.getElementById('sim-results').style.opacity = '1';
+            const base = appState.financialData.current_liquid_assets;
+            document.getElementById('sim-p10').textContent = `$${Math.round(base * 1.4).toLocaleString()}`;
+            document.getElementById('sim-p50').textContent = `$${Math.round(base * 1.9).toLocaleString()}`;
+            document.getElementById('sim-p90').textContent = `$${Math.round(base * 2.6).toLocaleString()}`;
+            appState.isSimulating = false; document.getElementById('sim-results').style.opacity = '1'; render();
         }, 1500);
     });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    bindEvents();
-    lucide.createIcons();
-});
+document.addEventListener('DOMContentLoaded', () => { bindEvents(); render(); });
