@@ -1,0 +1,139 @@
+/* * Refined CSS variables to reduce harsh contrast.
+ * Deep slate tones instead of pure blacks.
+ */
+#cirrus-horizons-wrapper {
+    /* Brand & Accent Colors */
+    --blue: #007df0; 
+    --blue-alpha: rgba(0, 125, 240, 0.15); 
+    --emerald: #10b981; 
+    --rose: #f43f5e;
+    
+    /* Light Mode (Softened) */
+    --slate-50: #f8fafc; 
+    --slate-100: #f1f5f9; 
+    --slate-200: #e2e8f0; 
+    --slate-300: #cbd5e1; 
+    --slate-400: #94a3b8;
+    --slate-500: #64748b; 
+    --slate-800: #1e293b;
+    --slate-900: #0f172a; 
+    
+    /* Dynamic Theme Variables (Defaults to Light) */
+    --bg-main: var(--slate-100); /* Softer grey background */
+    --bg-card: #ffffff; 
+    --bg-header: #ffffff;
+    --text-main: var(--slate-900); 
+    --border-color: var(--slate-200);
+    --input-bg: var(--slate-50);
+    --slate-50-alpha: rgba(248, 250, 252, 0.6);
+    
+    --font-sans: 'Inter', sans-serif;
+    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+    
+    font-family: var(--font-sans); background-color: var(--bg-main); color: var(--text-main);
+    line-height: 1.5; -webkit-font-smoothing: antialiased; min-height: 100vh; display: flex; flex-direction: column;
+}
+
+/* Dark Mode (Institutional / Softer Black) */
+#cirrus-horizons-wrapper.dark-theme {
+    --bg-main: #0b1120; /* Deep rich navy, not pure black */
+    --bg-card: #1e293b; /* Slate 800 for cards */
+    --bg-header: #1e293b; 
+    --text-main: #f8fafc; /* Soft white text */
+    --border-color: #334155;
+    --input-bg: #0f172a;
+    --slate-50-alpha: rgba(15, 23, 42, 0.6);
+}
+
+/* Resets */
+#cirrus-horizons-wrapper * { box-sizing: border-box; margin: 0; padding: 0; }
+#cirrus-horizons-wrapper button, #cirrus-horizons-wrapper input { font-family: inherit; }
+
+/* Auth Layout */
+#cirrus-horizons-wrapper #auth-overlay { position: fixed; inset: 0; background-color: var(--bg-main); z-index: 50; display: none; align-items: center; justify-content: center; }
+#cirrus-horizons-wrapper #auth-overlay.active { display: flex; }
+#cirrus-horizons-wrapper .auth-card { background-color: var(--bg-card); padding: 2.5rem; border-radius: 1rem; box-shadow: var(--shadow); width: 100%; max-width: 400px; text-align: center; border: 1px solid var(--border-color); }
+
+/* Utilities */
+#cirrus-horizons-wrapper .text-main { color: var(--text-main); }
+#cirrus-horizons-wrapper .text-blue { color: var(--blue); }
+#cirrus-horizons-wrapper .text-slate-400 { color: var(--slate-400); }
+#cirrus-horizons-wrapper .text-slate-500 { color: var(--slate-500); }
+#cirrus-horizons-wrapper .text-rose { color: var(--rose); }
+#cirrus-horizons-wrapper .text-emerald { color: var(--emerald); }
+#cirrus-horizons-wrapper .font-bold { font-weight: 700; }
+#cirrus-horizons-wrapper .font-extrabold { font-weight: 800; }
+#cirrus-horizons-wrapper .uppercase { text-transform: uppercase; }
+#cirrus-horizons-wrapper .tracking-wider { letter-spacing: 0.05em; }
+#cirrus-horizons-wrapper .w-full { width: 100%; }
+#cirrus-horizons-wrapper .mb-1 { margin-bottom: 0.25rem; }
+#cirrus-horizons-wrapper .mb-2 { margin-bottom: 0.5rem; }
+#cirrus-horizons-wrapper .mb-4 { margin-bottom: 1rem; }
+#cirrus-horizons-wrapper .mb-6 { margin-bottom: 1.5rem; }
+#cirrus-horizons-wrapper .mt-1 { margin-top: 0.25rem; }
+#cirrus-horizons-wrapper .mt-2 { margin-top: 0.5rem; }
+#cirrus-horizons-wrapper .mt-4 { margin-top: 1rem; }
+#cirrus-horizons-wrapper .mt-6 { margin-top: 1.5rem; }
+#cirrus-horizons-wrapper .p-4 { padding: 1rem; }
+#cirrus-horizons-wrapper .pt-6 { padding-top: 1.5rem; }
+#cirrus-horizons-wrapper .rounded-lg { border-radius: 0.5rem; }
+#cirrus-horizons-wrapper .bg-slate-50-alpha { background-color: var(--slate-50-alpha); }
+
+/* Layout Grid */
+#cirrus-horizons-wrapper .container { max-width: 1400px; margin: 0 auto; padding: 0 1rem; }
+#cirrus-horizons-wrapper .flex { display: flex; }
+#cirrus-horizons-wrapper .flex-col { flex-direction: column; }
+#cirrus-horizons-wrapper .items-center { align-items: center; }
+#cirrus-horizons-wrapper .items-end { align-items: flex-end; }
+#cirrus-horizons-wrapper .justify-between { justify-content: space-between; }
+#cirrus-horizons-wrapper .justify-center { justify-content: center; }
+#cirrus-horizons-wrapper .gap-2 { gap: 0.5rem; }
+#cirrus-horizons-wrapper .gap-3 { gap: 0.75rem; }
+#cirrus-horizons-wrapper .gap-4 { gap: 1rem; }
+#cirrus-horizons-wrapper .gap-6 { gap: 1.5rem; }
+#cirrus-horizons-wrapper .gap-8 { gap: 2rem; }
+
+#cirrus-horizons-wrapper .grid { display: grid; }
+#cirrus-horizons-wrapper .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+@media (min-width: 768px) { #cirrus-horizons-wrapper .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } #cirrus-horizons-wrapper .md\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { #cirrus-horizons-wrapper .layout-main { flex-direction: row; } #cirrus-horizons-wrapper .sidebar { width: 16rem; flex-shrink: 0; } }
+
+/* Header & Nav */
+#cirrus-horizons-wrapper header { background-color: var(--bg-header); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 20; }
+#cirrus-horizons-wrapper .header-content { padding: 1rem 0; }
+#cirrus-horizons-wrapper .icon-btn { color: var(--slate-400); background: none; border: none; cursor: pointer; transition: color 0.2s; }
+#cirrus-horizons-wrapper .icon-btn:hover { color: var(--blue); }
+#cirrus-horizons-wrapper .avatar { width: 2.5rem; height: 2.5rem; border-radius: 50%; background-color: var(--blue); color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.875rem; }
+
+#cirrus-horizons-wrapper .sidebar-nav { position: sticky; top: 7rem; }
+#cirrus-horizons-wrapper .nav-section-title { font-size: 0.75rem; font-weight: 700; color: var(--slate-400); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; padding: 0 1rem; margin-top: 2rem; }
+#cirrus-horizons-wrapper .nav-section-title:first-child { margin-top: 0; }
+#cirrus-horizons-wrapper .nav-item { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; border-radius: 0.5rem; transition: all 0.2s; color: var(--slate-500); background: none; border: none; cursor: pointer;}
+#cirrus-horizons-wrapper .nav-item:hover { background-color: var(--blue-alpha); color: var(--text-main); }
+#cirrus-horizons-wrapper .nav-item.active { background-color: var(--blue); color: #ffffff; }
+#cirrus-horizons-wrapper .nav-item .icon { color: var(--slate-400); width: 18px; height: 18px; }
+#cirrus-horizons-wrapper .nav-item.active .icon { color: #ffffff; }
+
+/* Main Content & Cards */
+#cirrus-horizons-wrapper .main-padding { padding-top: 2rem; padding-bottom: 2rem; flex: 1;}
+#cirrus-horizons-wrapper .main-content { flex: 1; }
+#cirrus-horizons-wrapper .tab-content { display: none; }
+#cirrus-horizons-wrapper .tab-content.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+#cirrus-horizons-wrapper .card { background-color: var(--bg-card); padding: 2rem; border-radius: 1rem; border: 1px solid var(--border-color); box-shadow: var(--shadow); }
+
+/* Interactive Elements */
+#cirrus-horizons-wrapper .btn-navy { background-color: var(--blue); color: #ffffff; padding: 0.75rem 1rem; border-radius: 0.5rem; font-weight: 700; display: flex; align-items: center; justify-content: center; transition: all 0.2s; border: none; cursor: pointer;}
+#cirrus-horizons-wrapper .btn-outline { background-color: transparent; border: 1px solid var(--border-color); color: var(--text-main); padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 700; transition: all 0.2s; cursor: pointer;}
+#cirrus-horizons-wrapper .input-field { width: 100%; background-color: var(--input-bg); border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 0.75rem 1rem; color: var(--text-main); outline: none; transition: all 0.2s; }
+#cirrus-horizons-wrapper .input-field:focus { border-color: var(--blue); }
+
+/* Progress */
+#cirrus-horizons-wrapper .progress-bar-container { width: 100%; background-color: var(--input-bg); border-radius: 9999px; height: 0.75rem; overflow: hidden; border: 1px solid var(--border-color);}
+#cirrus-horizons-wrapper .progress-bar-fill { background-color: var(--blue); height: 100%; border-radius: 9999px; transition: width 0.5s ease-in-out; }
+
+/* Animations & Footer */
+#cirrus-horizons-wrapper .spin { animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+#cirrus-horizons-wrapper .app-footer { margin-top: auto; padding-top: 3rem; text-align: center; }
