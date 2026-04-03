@@ -4,34 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cirrus: Horizons Dashboard</title>
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="icon" href="data:,">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
     <script src="https://unpkg.com/lucide@latest"></script>
-    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-    
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="cirrus-horizons-wrapper">
         
-        <div id="auth-overlay" class="active">
+        <div id="auth-overlay">
             <div class="auth-card">
                 <i data-lucide="cloud" class="text-blue" style="width: 48px; height: 48px; margin-bottom: 1rem;"></i>
                 <h2 class="text-2xl font-bold text-main mb-4">Horizon Authentication</h2>
-                <input type="email" id="auth-email" placeholder="Email Address" class="input-field mb-4">
-                <input type="password" id="auth-password" placeholder="Password" class="input-field mb-4">
-                <button id="login-btn" class="btn-primary w-full mb-2">Access Engine</button>
-                <button id="signup-btn" class="btn-outline w-full">Create Account</button>
-                <p id="auth-error" class="text-xs text-rose mt-2" style="display:none;"></p>
+                <div class="flex flex-col gap-4">
+                    <input type="email" id="auth-email" placeholder="Email Address" class="input-field">
+                    <input type="password" id="auth-password" placeholder="Password" class="input-field">
+                    <button id="login-btn" class="btn-primary w-full">Access Engine (Log In)</button>
+                    <button id="signup-btn" class="btn-outline w-full">Create Account</button>
+                </div>
+                <p id="auth-error" class="text-xs text-rose mt-4" style="display:none;"></p>
             </div>
         </div>
 
-        <div id="app-container" style="display: none; flex-direction: column; min-height: 100vh;">
+        <div id="app-container" style="display:none;">
             <header>
                 <div class="container flex items-center justify-between header-content">
                     <div class="flex items-center">
@@ -43,7 +39,7 @@
                     </div>
                     <div class="flex items-center gap-4">
                         <button id="theme-toggle" class="icon-btn"><i data-lucide="moon" id="theme-icon"></i></button>
-                        <button id="logout-btn" class="icon-btn"><i data-lucide="log-out"></i></button>
+                        <button id="logout-btn" class="icon-btn" title="Log Out"><i data-lucide="log-out"></i></button>
                         <div class="avatar" id="user-avatar">CA</div>
                     </div>
                 </div>
@@ -53,111 +49,51 @@
                 <aside class="sidebar">
                     <nav class="sidebar-nav">
                         <h3 class="nav-section-title">Intelligence</h3>
-                        <button class="nav-item active" data-tab="dashboard">
-                            <div class="flex items-center gap-3"><i data-lucide="activity" class="icon"></i><span class="font-bold text-sm">Efficiency Dashboard</span></div>
-                        </button>
-                        <button class="nav-item" data-tab="simulations">
-                            <div class="flex items-center gap-3"><i data-lucide="line-chart" class="icon"></i><span class="font-bold text-sm">Monte Carlo Engine</span></div>
-                        </button>
+                        <button class="nav-item active" data-tab="dashboard"><div class="flex items-center gap-3"><i data-lucide="activity" class="icon"></i><span class="font-bold text-sm">Dashboard</span></div></button>
+                        <button class="nav-item" data-tab="simulations"><div class="flex items-center gap-3"><i data-lucide="line-chart" class="icon"></i><span class="font-bold text-sm">Monte Carlo</span></div></button>
                         <h3 class="nav-section-title">Protocols</h3>
-                        <button class="nav-item" data-tab="budget">
-                            <div class="flex items-center gap-3"><i data-lucide="wallet" class="icon"></i><span class="font-bold text-sm">Cashflow Routing</span></div>
-                        </button>
-                        <button class="nav-item" data-tab="debt">
-                            <div class="flex items-center gap-3"><i data-lucide="layers" class="icon"></i><span class="font-bold text-sm">Liability Snowball</span></div>
-                        </button>
+                        <button class="nav-item" data-tab="budget"><div class="flex items-center gap-3"><i data-lucide="wallet" class="icon"></i><span class="font-bold text-sm">Cashflow</span></div></button>
+                        <button class="nav-item" data-tab="debt"><div class="flex items-center gap-3"><i data-lucide="layers" class="icon"></i><span class="font-bold text-sm">Liability</span></div></button>
                     </nav>
                 </aside>
 
                 <main class="main-content">
-                    
                     <section id="dashboard" class="tab-content active">
-                        <div class="flex flex-col gap-6">
-                            <div class="card">
-                                <div class="flex justify-between items-start mb-6">
-                                    <div>
-                                        <h3 class="text-2xl font-bold text-main">Baseline Assessment</h3>
-                                        <p id="baseline-strategy" class="text-sm text-slate-500">Loading strategy...</p>
-                                    </div>
-                                    <div class="decade-selector" id="decade-container">
-                                        <button class="decade-btn" data-decade="20">20s</button>
-                                        <button class="decade-btn" data-decade="30">30s</button>
-                                        <button class="decade-btn" data-decade="40">40s</button>
-                                        <button class="decade-btn" data-decade="50">50s</button>
-                                    </div>
-                                </div>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    <div class="flex items-center gap-4">
-                                        <div class="efficiency-ring-container">
-                                            <svg class="efficiency-ring-svg"><circle cx="24" cy="24" r="20" class="ring-bg" transform="translate(2,2)"></circle><circle cx="24" cy="24" r="20" class="ring-progress" id="efficiency-ring" transform="translate(2,2)"></circle></svg>
-                                            <span class="text-sm font-bold text-main" id="efficiency-score">0%</span>
-                                        </div>
-                                        <div><p class="text-sm font-bold text-main">Efficiency Score</p><p class="text-xs text-slate-500">Capital optimization</p></div>
-                                    </div>
-                                    <div class="flex flex-col justify-center">
-                                        <div class="flex justify-between mb-1"><span class="text-xs font-bold text-slate-500 uppercase">Goal Progress</span><span id="goal-text" class="text-xs font-bold text-blue">0%</span></div>
-                                        <div class="progress-bar-container"><div id="goal-bar" class="progress-bar-fill" style="width: 0%"></div></div>
-                                    </div>
+                        <div class="card">
+                            <div class="flex justify-between items-start mb-6">
+                                <div><h3 class="text-2xl font-bold text-main">Baseline Assessment</h3><p id="baseline-strategy" class="text-sm text-slate-500">Strategy Engine Active</p></div>
+                                <div class="decade-selector" id="decade-container">
+                                    <button class="decade-btn" data-decade="20">20s</button>
+                                    <button class="decade-btn" data-decade="30">30s</button>
+                                    <button class="decade-btn" data-decade="40">40s</button>
+                                    <button class="decade-btn" data-decade="50">50s</button>
                                 </div>
                             </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div class="card"><h3 class="text-xs font-bold text-slate-500 uppercase mb-2">Liquid Assets</h3><input type="number" id="main-assets-input" class="text-3xl font-extrabold text-blue w-full bg-transparent border-none outline-none" placeholder="0"></div>
-                                <div class="card"><h3 class="text-xs font-bold text-slate-500 uppercase mb-2">Horizon Goal</h3><input type="number" id="main-goal-input" class="text-3xl font-extrabold text-main w-full bg-transparent border-none outline-none" placeholder="0"></div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div class="flex items-center gap-4">
+                                    <div class="efficiency-ring-container">
+                                        <svg class="efficiency-ring-svg"><circle cx="24" cy="24" r="20" class="ring-bg" transform="translate(2,2)"></circle><circle cx="24" cy="24" r="20" class="ring-progress" id="efficiency-ring" transform="translate(2,2)"></circle></svg>
+                                        <span class="text-sm font-bold text-main" id="efficiency-score">0%</span>
+                                    </div>
+                                    <div><p class="text-sm font-bold text-main">Efficiency Score</p></div>
+                                </div>
+                                <div class="flex flex-col justify-center">
+                                    <div class="flex justify-between mb-1"><span class="text-xs font-bold text-slate-500 uppercase">Goal Progress</span><span id="goal-text" class="text-xs font-bold text-blue">0%</span></div>
+                                    <div class="progress-bar-container"><div id="goal-bar" class="progress-bar-fill" style="width: 0%"></div></div>
+                                </div>
                             </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                            <div class="card"><h3 class="text-xs font-bold text-slate-500 uppercase mb-2">Liquid Assets</h3><input type="number" id="main-assets-input" class="text-3xl font-extrabold text-blue w-full bg-transparent border-none outline-none"></div>
+                            <div class="card"><h3 class="text-xs font-bold text-slate-500 uppercase mb-2">Horizon Goal</h3><input type="number" id="main-goal-input" class="text-3xl font-extrabold text-main w-full bg-transparent border-none outline-none"></div>
                         </div>
                     </section>
 
-                    <section id="simulations" class="tab-content">
-                        <div class="card">
-                            <h2 class="text-2xl font-bold text-main mb-6">Monte Carlo Engine</h2>
-                            <button id="run-sim-btn" class="btn-primary w-full mb-8"><i data-lucide="zap" class="w-4 h-4 mr-2"></i>Execute 10,000 Iterations</button>
-                            <div id="sim-results" class="grid grid-cols-3 gap-4 text-center opacity-30">
-                                <div><p class="text-xs font-bold text-slate-500 uppercase">Conservative</p><p id="sim-p10" class="text-xl font-bold text-main">$0</p></div>
-                                <div><p class="text-xs font-bold text-blue uppercase">Median</p><p id="sim-p50" class="text-2xl font-extrabold text-blue">$0</p></div>
-                                <div><p class="text-xs font-bold text-slate-500 uppercase">Aggressive</p><p id="sim-p90" class="text-xl font-bold text-main">$0</p></div>
-                            </div>
-                        </div>
-                    </section>
+                    <section id="simulations" class="tab-content"><div class="card"><h2 class="text-2xl font-bold text-main">Monte Carlo</h2><button id="run-sim-btn" class="btn-primary w-full mt-4">Run 10,000 Iterations</button><div id="sim-results" class="grid grid-cols-3 gap-4 mt-8 text-center opacity-30"><div><p class="text-xs">Conservative</p><p id="sim-p10" class="font-bold">$0</p></div><div><p class="text-xs text-blue">Median</p><p id="sim-p50" class="font-bold text-blue text-xl">$0</p></div><div><p class="text-xs">Aggressive</p><p id="sim-p90" class="font-bold">$0</p></div></div></div></section>
+                    <section id="budget" class="tab-content"><div class="card"><h2 class="text-2xl font-bold text-main">Cashflow Ledger</h2><div class="grid grid-cols-1 md:grid-cols-4 gap-3 mt-4"><select id="trans-type" class="input-field"><option value="deposit">Deposit</option><option value="bill">Bill</option></select><input type="text" id="trans-label" class="input-field" placeholder="Label"><input type="number" id="trans-amount" class="input-field" placeholder="Amount"><button id="add-trans-btn" class="btn-primary">Add</button></div><div id="ledger-wrapper" class="mt-6"></div><p id="net-surplus" class="text-2xl font-bold mt-4 text-emerald">$0</p></div></section>
+                    <section id="debt" class="tab-content"><div class="card"><h2 class="text-2xl font-bold text-main">Liability Snowball</h2><div class="grid grid-cols-1 md:grid-cols-4 gap-3 mt-4"><input type="text" id="debt-name" class="input-field" placeholder="Name"><input type="number" id="debt-bal" class="input-field" placeholder="Balance"><input type="number" id="debt-pmt" class="input-field" placeholder="Payment"><button id="add-debt-btn" class="btn-primary">Add</button></div><div id="debt-wrapper" class="mt-6"></div><p id="total-debt" class="text-2xl font-bold mt-4 text-rose">$0</p></div></section>
 
-                    <section id="budget" class="tab-content">
-                        <div class="card">
-                            <h2 class="text-2xl font-bold text-main mb-6">Cashflow Routing</h2>
-                            <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6 p-4 bg-slate-50-alpha rounded-lg">
-                                <select id="trans-type" class="input-field"><option value="deposit">Deposit (+)</option><option value="bill">Bill (-)</option></select>
-                                <input type="text" id="trans-label" class="input-field" placeholder="Label">
-                                <input type="number" id="trans-amount" class="input-field" placeholder="Amount">
-                                <button id="add-trans-btn" class="btn-primary">Add Entry</button>
-                            </div>
-                            <div id="ledger-wrapper"></div>
-                            <div class="mt-6 pt-6 border-t border-slate-200 flex justify-between items-end">
-                                <div><p class="text-xs font-bold text-slate-400 uppercase">Monthly Surplus</p><p id="net-surplus" class="text-3xl font-extrabold text-emerald">$0</p></div>
-                            </div>
-                        </div>
-                    </section>
-
-                    <section id="debt" class="tab-content">
-                        <div class="card">
-                            <h2 class="text-2xl font-bold text-main mb-6">Liability Snowball</h2>
-                            <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6 p-4 bg-slate-50-alpha rounded-lg">
-                                <input type="text" id="debt-name" class="input-field" placeholder="Debt Name">
-                                <input type="number" id="debt-bal" class="input-field" placeholder="Balance">
-                                <input type="number" id="debt-pmt" class="input-field" placeholder="Payment">
-                                <button id="add-debt-btn" class="btn-primary">Add Debt</button>
-                            </div>
-                            <div id="debt-wrapper"></div>
-                            <div class="mt-6 pt-6 border-t border-slate-200 flex justify-between items-end">
-                                <div><p class="text-xs font-bold text-slate-400 uppercase">Total Liability</p><p id="total-debt" class="text-3xl font-extrabold text-rose">$0</p></div>
-                                <div class="text-right"><p class="text-xs font-bold text-slate-400 uppercase">Time to Zero</p><p id="debt-months" class="text-xl font-bold text-main">0 Months</p></div>
-                            </div>
-                        </div>
-                    </section>
-
-                    <footer class="app-footer">
-                        <div class="flex items-center justify-center gap-2">
-                            <i data-lucide="cloud" class="text-blue w-5 h-5"></i>
-                            <span class="text-sm font-bold text-slate-400 uppercase tracking-wider">Powered by Cirrus Automations</span>
-                        </div>
-                    </footer>
+                    <footer class="app-footer"><div class="flex items-center justify-center gap-2"><i data-lucide="cloud" class="text-blue w-5 h-5"></i><span class="text-sm font-bold text-slate-400 uppercase">Powered by Cirrus Automations</span></div></footer>
                 </main>
             </div>
         </div>
