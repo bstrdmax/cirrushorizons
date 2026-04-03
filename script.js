@@ -1,10 +1,11 @@
-/**
- * CIRRUS HORIZONS - FULL INTERACTIVE ENGINE
- */
-
+// --- 1. SUPABASE CONFIGURATION ---
 const SUPABASE_URL = 'https://tdgudmnrqhlkwefthdat.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkZ3VkbW5ycWhsa3dlZnRoZGF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyMTI5MjksImV4cCI6MjA5MDc4ODkyOX0.Rlr-BS4x_WyMTiRBTFGQdddV8b0dtKfNzKBz1YOsJLo'; 
 
+// Debugging line: This will show in your browser console if the key is loading
+console.log("Initializing Supabase with URL:", SUPABASE_URL);
+
+// Initialize the client
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // --- GLOBAL STATE ---
@@ -188,5 +189,7 @@ function bindEvents() {
         }, 1500);
     });
 }
+
+document.addEventListener('DOMContentLoaded', () => { bindEvents(); render(); });
 
 document.addEventListener('DOMContentLoaded', () => { bindEvents(); render(); });
