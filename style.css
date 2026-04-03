@@ -1,4 +1,4 @@
-/* --- VARIABLES --- */
+/* --- THEME CONSTANTS --- */
 :root {
     --blue: #007df0;
     --emerald: #10b981;
@@ -12,13 +12,13 @@
     --font-sans: 'Inter', sans-serif;
 }
 
-/* --- BASE --- */
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-sans); }
 
 body { 
     background-color: var(--bg-main); 
     color: var(--text-main);
     overflow-x: hidden;
+    min-height: 100vh;
 }
 
 #cirrus-horizons-wrapper {
@@ -32,7 +32,7 @@ body {
     position: fixed;
     inset: 0;
     background: var(--bg-main);
-    z-index: 200;
+    z-index: 999;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -53,9 +53,7 @@ header {
     background-color: var(--bg-sidebar);
     border-bottom: 1px solid var(--border);
     padding: 1rem 2rem;
-    position: sticky;
-    top: 0;
-    z-index: 100;
+    width: 100%;
 }
 
 .header-content {
@@ -64,10 +62,9 @@ header {
     align-items: center;
     max-width: 1400px;
     margin: 0 auto;
-    width: 100%;
 }
 
-/* --- LAYOUT GRID --- */
+/* --- LAYOUT --- */
 .layout-main {
     display: flex;
     flex: 1;
@@ -84,12 +81,10 @@ header {
 
 .main-content {
     flex: 1;
-    padding-left: 2.5rem; /* Prevents sidebar overlap */
+    padding-left: 3rem;
 }
 
 /* --- NAV --- */
-.sidebar-nav { position: sticky; top: 6rem; }
-
 .nav-section-title {
     font-size: 0.7rem;
     text-transform: uppercase;
@@ -103,8 +98,8 @@ header {
     width: 100%;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 0.85rem 1rem;
+    gap: 12px;
+    padding: 0.85rem 1.25rem;
     border-radius: 0.5rem;
     color: var(--text-muted);
     background: none;
@@ -116,14 +111,9 @@ header {
 }
 
 .nav-item:hover { background: rgba(0, 125, 240, 0.1); color: #fff; }
+.nav-item.active { background: var(--blue); color: #fff; }
 
-.nav-item.active {
-    background: var(--blue);
-    color: #fff;
-    box-shadow: 0 4px 12px rgba(0, 125, 240, 0.3);
-}
-
-/* --- DASHBOARD ELEMENTS --- */
+/* --- COMPONENTS --- */
 .card {
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -147,33 +137,36 @@ header {
     outline: none;
 }
 
-.btn-primary { background: var(--blue); color: #fff; border: none; padding: 0.8rem; border-radius: 0.5rem; font-weight: 700; cursor: pointer; }
-.btn-outline { background: none; border: 1px solid var(--border); color: #fff; padding: 0.8rem; border-radius: 0.5rem; cursor: pointer; }
-
-/* --- RINGS & BARS --- */
+/* --- EFFICIENCY RING FIX --- */
 .efficiency-ring-container {
-    width: 60px; height: 60px;
+    width: 80px; height: 80px;
     position: relative;
     display: flex; align-items: center; justify-content: center;
 }
 
-.efficiency-ring-svg { width: 60px; height: 60px; transform: rotate(-90deg); }
-.ring-bg { fill: none; stroke: var(--border); stroke-width: 5; }
+.efficiency-ring-svg { width: 80px; height: 80px; transform: rotate(-90deg); }
+.ring-bg { fill: none; stroke: var(--border); stroke-width: 6; }
 .ring-progress { 
-    fill: none; stroke: var(--blue); stroke-width: 5; 
-    stroke-dasharray: 163.36; /* Circumference for r=26 */
-    stroke-dashoffset: 163.36; 
-    transition: 1s ease-in-out; 
+    fill: none; stroke: var(--blue); stroke-width: 6; 
+    stroke-dasharray: 226; /* 2 * PI * r (r=36) */
+    stroke-dashoffset: 226; 
+    transition: 1.5s cubic-bezier(0.4, 0, 0.2, 1);
     stroke-linecap: round;
 }
 
-.progress-bar-container { background: var(--bg-main); height: 10px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
-.progress-bar-fill { background: var(--blue); height: 100%; transition: 0.8s ease; }
+#efficiency-score { position: absolute; font-size: 1.1rem; font-weight: 800; }
 
-/* --- CRUD LISTS --- */
+/* --- PROGRESS --- */
+.progress-bar-container { background: var(--bg-main); height: 12px; border-radius: 20px; overflow: hidden; border: 1px solid var(--border); }
+.progress-bar-fill { background: var(--blue); height: 100%; transition: 1s ease; }
+
+.decade-selector { display: flex; gap: 4px; background: var(--bg-main); padding: 4px; border-radius: 8px; }
+.decade-btn { border: none; background: none; color: var(--text-muted); padding: 5px 10px; font-size: 0.7rem; font-weight: 800; cursor: pointer; border-radius: 5px; }
+.decade-btn.active { background: var(--blue); color: #fff; }
+
 .crud-item {
     display: grid;
-    grid-template-columns: 80px 1fr 100px 80px;
+    grid-template-columns: 80px 1fr 100px 50px;
     padding: 1rem;
     background: var(--bg-main);
     border-radius: 0.6rem;
@@ -182,24 +175,16 @@ header {
     align-items: center;
 }
 
-/* --- RESPONSIVE --- */
+.btn-primary { background: var(--blue); color: #fff; border: none; padding: 0.85rem; border-radius: 0.5rem; font-weight: 700; cursor: pointer; }
+.btn-outline { background: none; border: 1px solid var(--border); color: #fff; padding: 0.85rem; border-radius: 0.5rem; cursor: pointer; }
+
+/* Responsive */
 @media (max-width: 1024px) {
     .layout-main { flex-direction: column; }
     .sidebar { width: 100%; }
     .main-content { padding-left: 0; padding-top: 1rem; }
 }
 
-/* --- UTILITIES --- */
-.flex { display: flex; } .flex-col { flex-direction: column; }
-.items-center { align-items: center; } .justify-between { justify-content: space-between; }
-.gap-2 { gap: 0.5rem; } .gap-4 { gap: 1rem; }
-.text-main { color: var(--text-main); } .text-blue { color: var(--blue); } .text-rose { color: var(--rose); } .text-emerald { color: var(--emerald); }
-.font-bold { font-weight: 700; } .font-extrabold { font-weight: 800; } .uppercase { text-transform: uppercase; }
-.avatar { width: 40px; height: 40px; background: var(--blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; }
-.icon-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 5px; }
-.decade-selector { display: flex; gap: 4px; background: var(--bg-main); padding: 4px; border-radius: 8px; }
-.decade-btn { border: none; background: none; color: var(--text-muted); padding: 5px 10px; font-size: 0.7rem; font-weight: 800; cursor: pointer; border-radius: 5px; }
-.decade-btn.active { background: var(--blue); color: #fff; }
-.tab-content { display: none; } .tab-content.active { display: block; animation: fadeIn 0.4s; }
+.tab-content { display: none; }
+.tab-content.active { display: block; animation: fadeIn 0.4s; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-.app-footer { margin-top: auto; padding: 4rem 0 2rem; text-align: center; }
